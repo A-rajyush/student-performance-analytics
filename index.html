@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f3ec">
+  <meta name="description" content="Student marks, attendance, grades, and subject performance analytics.">
+  <title>Student Scorebook | Performance Analytics</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f3ec;
+      --surface: #fffefa;
+      --ink: #182b27;
+      --muted: #65736c;
+      --line: #d9ddd3;
+      --green: #176c53;
+      --green-dark: #104735;
+      --mint: #dcebe1;
+      --lime: #d9e565;
+      --coral: #b5533d;
+      --coral-pale: #f5e5de;
+      --gold: #b58a32;
+      --shadow: 0 12px 36px rgba(24, 43, 39, 0.07);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    button, input, select { font: inherit; }
+    button, select { color: inherit; }
+    a { color: inherit; }
+
+    .topbar {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 0 max(28px, calc((100vw - 1320px) / 2));
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      font-weight: 700;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 3px;
+      background: var(--green-dark);
+      color: white;
+      font-family: Baskerville, Georgia, serif;
+      font-size: 19px;
+    }
+
+    .brand-name { white-space: nowrap; }
+    .brand-subtitle { color: var(--muted); font-weight: 400; }
+
+    .topbar-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--green-dark);
+      font-weight: 700;
+    }
+
+    .topbar-link:hover { text-decoration: underline; }
+    .topbar-link svg { width: 16px; height: 16px; }
+
+    main {
+      width: min(1320px, calc(100% - 56px));
+      margin: 0 auto;
+      padding: 40px 0 64px;
+    }
+
+    .page-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 6px;
+      font-family: Baskerville, "Palatino Linotype", Georgia, serif;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 500;
+      line-height: 1.05;
+    }
+
+    .lede { margin: 0; color: var(--muted); }
+
+    .freshness {
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .freshness::before {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      content: "";
+      vertical-align: 1px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 22px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .metric {
+      min-height: 112px;
+      padding: 18px 22px;
+      border-right: 1px solid var(--line);
+    }
+
+    .metric:last-child { border-right: 0; }
+    .metric-label { display: block; margin-bottom: 10px; color: var(--muted); font-size: 12px; }
+    .metric-value { display: block; font-family: Baskerville, Georgia, serif; font-size: 34px; line-height: 1; }
+    .metric-note { display: block; margin-top: 8px; color: var(--muted); font-size: 11px; }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.8fr);
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    .panel {
+      min-width: 0;
+      padding: 22px 24px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 19px;
+    }
+
+    h2 { margin-bottom: 0; font-family: Baskerville, Georgia, serif; font-size: 22px; font-weight: 500; }
+    .panel-note { color: var(--muted); font-size: 11px; }
+
+    .subject-list { display: grid; gap: 16px; }
+
+    .subject-row {
+      display: grid;
+      grid-template-columns: minmax(115px, 0.8fr) minmax(80px, 1.8fr) 48px;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .subject-name { overflow-wrap: anywhere; font-size: 12px; font-weight: 700; }
+    .bar-track { height: 9px; overflow: hidden; border-radius: 2px; background: #e8ebe3; }
+    .bar-fill { height: 100%; border-radius: inherit; background: var(--green); }
+    .subject-average { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .subject-range { grid-column: 2 / 4; margin-top: -12px; color: var(--muted); font-size: 10px; }
+
+    .outcome-total {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      margin-bottom: 12px;
+    }
+
+    .outcome-total strong { font-family: Baskerville, Georgia, serif; font-size: 34px; font-weight: 500; }
+    .outcome-total span { color: var(--muted); font-size: 12px; }
+
+    .pass-track { display: flex; height: 11px; overflow: hidden; margin-bottom: 18px; border-radius: 2px; background: var(--coral-pale); }
+    .pass-fill { height: 100%; background: var(--green); }
+
+    .outcome-legend { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 24px; font-size: 12px; }
+    .pass-label { color: var(--green-dark); }
+    .fail-label { color: var(--coral); }
+
+    .grade-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+    .grade-item { padding: 8px 4px; border-top: 2px solid var(--line); text-align: center; }
+    .grade-item.grade-a, .grade-item.grade-b { border-color: var(--green); }
+    .grade-item.grade-f { border-color: var(--coral); }
+    .grade-letter { display: block; font-weight: 800; }
+    .grade-count { color: var(--muted); font-size: 11px; }
+
+    .leader {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 22px;
+      padding: 17px 21px;
+      border-left: 4px solid var(--lime);
+      border-radius: 3px;
+      background: var(--green-dark);
+      color: white;
+    }
+
+    .leader-icon {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--lime);
+      color: var(--green-dark);
+      font-family: Baskerville, Georgia, serif;
+      font-size: 22px;
+    }
+
+    .leader-label { display: block; color: #c4d5cb; font-size: 10px; text-transform: uppercase; }
+    .leader-name { display: block; margin-top: 3px; font-family: Baskerville, Georgia, serif; font-size: 22px; }
+    .leader-department { display: block; color: #c4d5cb; font-size: 11px; }
+    .leader-score { text-align: right; }
+    .leader-score strong { display: block; color: var(--lime); font-family: Baskerville, Georgia, serif; font-size: 29px; font-weight: 500; }
+    .leader-score span { color: #c4d5cb; font-size: 10px; }
+
+    .roster {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .roster-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px 22px 15px;
+    }
+
+    .roster-head h2 { margin: 0; }
+    .roster-count { color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      padding: 0 22px 16px;
+    }
+
+    .control {
+      min-height: 36px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      background: white;
+      color: var(--ink);
+      outline-color: var(--green);
+    }
+
+    .search { width: min(280px, 100%); }
+    .table-scroll { overflow-x: auto; border-top: 1px solid var(--line); }
+
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { padding: 11px 13px; border-bottom: 1px solid #e9ebe4; text-align: right; font-size: 11px; }
+    th { background: #f7f7f1; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+    tbody tr:hover { background: #f3f7f1; }
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .sort-button {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font-size: inherit;
+      font-weight: inherit;
+      text-transform: inherit;
+    }
+
+    .sort-button:hover { color: var(--green); }
+    .student-name { color: var(--ink); font-weight: 700; }
+    .student-id { display: block; color: var(--muted); font-size: 10px; }
+    .department { color: var(--muted); }
+
+    .badge {
+      display: inline-block;
+      min-width: 31px;
+      padding: 3px 7px;
+      border-radius: 2px;
+      background: var(--mint);
+      color: var(--green-dark);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .badge.grade-f { background: var(--coral-pale); color: var(--coral); }
+    .result-pass { color: var(--green); font-weight: 800; }
+    .result-fail { color: var(--coral); font-weight: 800; }
+    .empty-state { padding: 30px; color: var(--muted); text-align: center; }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    footer a { color: var(--green-dark); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    .error {
+      margin: 24px 0;
+      padding: 16px;
+      border: 1px solid #dc9a85;
+      border-radius: 3px;
+      background: var(--coral-pale);
+      color: #713625;
+    }
+
+    @media (max-width: 800px) {
+      .analysis-grid { grid-template-columns: 1fr; }
+      .metric { padding: 16px; }
+    }
+
+    @media (max-width: 600px) {
+      .topbar { min-height: 58px; padding: 0 17px; }
+      .brand { gap: 8px; font-size: 12px; }
+      .brand-subtitle { display: none; }
+      .topbar-link { font-size: 11px; }
+      main { width: calc(100% - 32px); padding-top: 28px; }
+      .page-heading { align-items: start; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+      h1 { font-size: 36px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metric { min-height: 96px; border-bottom: 1px solid var(--line); }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(3), .metric:nth-child(4) { border-bottom: 0; }
+      .metric-value { font-size: 30px; }
+      .panel { padding: 18px 16px; }
+      .subject-row { grid-template-columns: minmax(90px, 0.9fr) minmax(65px, 1.5fr) 42px; gap: 9px; }
+      .leader { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; padding: 14px; }
+      .leader-icon { width: 36px; height: 36px; }
+      .leader-name { font-size: 18px; }
+      .leader-score strong { font-size: 24px; }
+      .roster-head { align-items: start; flex-direction: column; gap: 5px; padding: 18px 16px 12px; }
+      .controls { padding: 0 16px 14px; }
+      .control { flex: 1 1 140px; }
+      .search { flex-basis: 100%; width: 100%; }
+      th, td { padding: 10px; }
+      footer { flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      main { animation: arrive 420ms ease-out both; }
+      @keyframes arrive { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">S</span>
+      <span class="brand-name">Student Scorebook</span>
+      <span class="brand-subtitle">/ Performance analytics</span>
+    </div>
+    <a class="topbar-link" href="students.csv" download>
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5v9m0 0 3.5-3.5M10 11.5 6.5 8M3 13.5v3h14v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download CSV
+    </a>
+  </header>
+
+  <main>
+    <section class="page-heading" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Academic year · Student cohort</p>
+        <h1 id="page-title">Performance overview</h1>
+        <p class="lede" id="dataset-meta">Loading student records…</p>
+      </div>
+      <div class="freshness">Live from students.csv</div>
+    </section>
+
+    <div id="load-error" class="error" role="alert" hidden></div>
+
+    <section class="metrics" aria-label="Class summary">
+      <div class="metric"><span class="metric-label">Students</span><strong class="metric-value" id="student-count">—</strong><span class="metric-note">Across all departments</span></div>
+      <div class="metric"><span class="metric-label">Class average</span><strong class="metric-value" id="class-average">—</strong><span class="metric-note">Average of student averages</span></div>
+      <div class="metric"><span class="metric-label">Pass rate</span><strong class="metric-value" id="pass-rate">—</strong><span class="metric-note" id="pass-note">—</span></div>
+      <div class="metric"><span class="metric-label">Highest average</span><strong class="metric-value" id="highest-average">—</strong><span class="metric-note" id="highest-note">Top student</span></div>
+    </section>
+
+    <section class="analysis-grid" aria-label="Performance analysis">
+      <article class="panel">
+        <div class="panel-heading"><h2>Subject performance</h2><span class="panel-note">Mean marks · out of 100</span></div>
+        <div id="subject-list" class="subject-list"></div>
+      </article>
+      <article class="panel">
+        <div class="panel-heading"><h2>Results &amp; grades</h2><span class="panel-note">Current cohort</span></div>
+        <div class="outcome-total"><strong id="pass-total">—</strong><span>students passed</span></div>
+        <div class="pass-track" aria-label="Pass and fail distribution"><div id="pass-fill" class="pass-fill"></div></div>
+        <div class="outcome-legend"><span id="pass-legend" class="pass-label">Pass —</span><span id="fail-legend" class="fail-label">Fail —</span></div>
+        <div id="grade-list" class="grade-list" aria-label="Grade distribution"></div>
+      </article>
+    </section>
+
+    <section id="leader" class="leader" aria-label="Top performer"></section>
+
+    <section class="roster" aria-labelledby="roster-title">
+      <div class="roster-head">
+        <h2 id="roster-title">Student records</h2>
+        <span class="roster-count" id="record-count">—</span>
+      </div>
+      <div class="controls">
+        <input class="control search" id="search" type="search" placeholder="Search name or student ID" aria-label="Search students">
+        <select class="control" id="department-filter" aria-label="Filter by department"><option value="">All departments</option></select>
+        <select class="control" id="result-filter" aria-label="Filter by result">
+          <option value="">All results</option><option value="Pass">Pass</option><option value="Fail">Fail</option>
+        </select>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th scope="col"><button class="sort-button" data-sort="Name">Student</button></th>
+            <th scope="col"><button class="sort-button" data-sort="Department">Department</button></th>
+            <th scope="col"><button class="sort-button" data-sort="Math">Math</button></th>
+            <th scope="col"><button class="sort-button" data-sort="Science">Science</button></th>
+            <th scope="col"><button class="sort-button" data-sort="English">English</button></th>
+            <th scope="col"><button class="sort-button" data-sort="Computer Science">Computer Science</button></th>
+            <th scope="col"><button class="sort-button" data-sort="Attendance (%)">Attendance</button></th>
+            <th scope="col"><button class="sort-button" data-sort="Average Marks">Average</button></th>
+            <th scope="col"><button class="sort-button" data-sort="Grade">Grade</button></th>
+            <th scope="col"><button class="sort-button" data-sort="Result">Result</button></th>
+          </tr></thead>
+          <tbody id="student-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>Grades: A ≥ 90 · B ≥ 80 · C ≥ 70 · D ≥ 60 · F &lt; 60</span>
+      <span>Pass: average ≥ 60, each subject ≥ 40, attendance ≥ 75%</span>
+      <a href="https://github.com/A-rajyush/student-performance-analytics">View source on GitHub</a>
+    </footer>
+  </main>
+
+  <script>
+    const subjectNames = ["Math", "Science", "English", "Computer Science"];
+    const gradeOrder = ["A", "B", "C", "D", "F"];
+    const state = { students: [], sortKey: "Average Marks", sortDirection: -1 };
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let value = "";
+      let quoted = false;
+
+      for (let index = 0; index < text.length; index += 1) {
+        const character = text[index];
+        if (character === '"') {
+          if (quoted && text[index + 1] === '"') {
+            value += '"';
+            index += 1;
+          } else {
+            quoted = !quoted;
+          }
+        } else if (character === "," && !quoted) {
+          row.push(value);
+          value = "";
+        } else if ((character === "\n" || character === "\r") && !quoted) {
+          if (character === "\r" && text[index + 1] === "\n") index += 1;
+          row.push(value);
+          if (row.some((cell) => cell.trim() !== "")) rows.push(row);
+          row = [];
+          value = "";
+        } else {
+          value += character;
+        }
+      }
+
+      row.push(value);
+      if (row.some((cell) => cell.trim() !== "")) rows.push(row);
+      if (rows.length < 2) throw new Error("The CSV has no student records.");
+
+      const headers = rows[0].map((header) => header.trim());
+      return rows.slice(1).map((cells) => {
+        const record = Object.fromEntries(headers.map((header, index) => [header, (cells[index] ?? "").trim()]));
+        for (const subject of subjectNames) record[subject] = Number(record[subject]);
+        record["Attendance (%)"] = Number(record["Attendance (%)"]);
+        return record;
+      });
+    }
+
+    function gradeFor(average) {
+      if (average >= 90) return "A";
+      if (average >= 80) return "B";
+      if (average >= 70) return "C";
+      if (average >= 60) return "D";
+      return "F";
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      })[character]);
+    }
+
+    function processStudents(records) {
+      return records.map((record) => {
+        const marks = subjectNames.map((subject) => record[subject]);
+        const total = marks.reduce((sum, mark) => sum + mark, 0);
+        const average = total / marks.length;
+        const passed = average >= 60 && marks.every((mark) => mark >= 40) && record["Attendance (%)"] >= 75;
+        return { ...record, "Total Marks": total, "Average Marks": average, Grade: gradeFor(average), Result: passed ? "Pass" : "Fail" };
+      });
+    }
+
+    function renderSummary(students) {
+      const averages = students.map((student) => student["Average Marks"]);
+      const passCount = students.filter((student) => student.Result === "Pass").length;
+      const failCount = students.length - passCount;
+      const highest = Math.max(...averages);
+      const leaders = students.filter((student) => student["Average Marks"] === highest);
+      const passRate = students.length ? (passCount / students.length) * 100 : 0;
+
+      document.querySelector("#student-count").textContent = students.length;
+      document.querySelector("#class-average").textContent = (averages.reduce((sum, value) => sum + value, 0) / students.length).toFixed(2);
+      document.querySelector("#pass-rate").textContent = `${passRate.toFixed(0)}%`;
+      document.querySelector("#pass-note").textContent = `${passCount} passed · ${failCount} failed`;
+      document.querySelector("#highest-average").textContent = highest.toFixed(2);
+      document.querySelector("#highest-note").textContent = leaders.map((student) => student.Name).join(", ");
+      document.querySelector("#pass-total").textContent = passCount;
+      document.querySelector("#pass-fill").style.width = `${passRate}%`;
+      document.querySelector("#pass-legend").textContent = `Pass ${passCount}`;
+      document.querySelector("#fail-legend").textContent = `Fail ${failCount}`;
+
+      const departments = new Set(students.map((student) => student.Department));
+      document.querySelector("#dataset-meta").textContent = `${departments.size} departments · ${subjectNames.length} subjects · ${students.length} student records`;
+
+      document.querySelector("#subject-list").innerHTML = subjectNames.map((subject) => {
+        const marks = students.map((student) => student[subject]);
+        const average = marks.reduce((sum, mark) => sum + mark, 0) / marks.length;
+        return `<div class="subject-row">
+          <span class="subject-name">${escapeHtml(subject)}</span>
+          <div class="bar-track" role="img" aria-label="${escapeHtml(subject)} average ${average.toFixed(2)} out of 100"><div class="bar-fill" style="width:${average}%"></div></div>
+          <span class="subject-average">${average.toFixed(2)}</span>
+          <span class="subject-range">Range ${Math.min(...marks)}–${Math.max(...marks)}</span>
+        </div>`;
+      }).join("");
+
+      const counts = Object.fromEntries(gradeOrder.map((grade) => [grade, students.filter((student) => student.Grade === grade).length]));
+      document.querySelector("#grade-list").innerHTML = gradeOrder.map((grade) =>
+        `<div class="grade-item grade-${grade.toLowerCase()}"><span class="grade-letter">${grade}</span><span class="grade-count">${counts[grade]}</span></div>`
+      ).join("");
+
+      const leader = leaders[0];
+      document.querySelector("#leader").innerHTML = `<span class="leader-icon" aria-hidden="true">#1</span>
+        <div><span class="leader-label">Top performer${leaders.length > 1 ? "s" : ""}</span>
+        <strong class="leader-name">${leaders.map((student) => escapeHtml(student.Name)).join(" · ")}</strong>
+        <span class="leader-department">${escapeHtml(leader.Department)}${leaders.length > 1 ? " · tied" : ""}</span></div>
+        <div class="leader-score"><strong>${highest.toFixed(2)}</strong><span>AVERAGE</span></div>`;
+
+      const departmentSelect = document.querySelector("#department-filter");
+      [...departments].sort().forEach((department) => {
+        const option = document.createElement("option");
+        option.value = department;
+        option.textContent = department;
+        departmentSelect.append(option);
+      });
+    }
+
+    function renderTable() {
+      const query = document.querySelector("#search").value.trim().toLowerCase();
+      const department = document.querySelector("#department-filter").value;
+      const result = document.querySelector("#result-filter").value;
+      const filtered = state.students.filter((student) => {
+        const matchesQuery = `${student.Name} ${student["Student ID"]}`.toLowerCase().includes(query);
+        return matchesQuery && (!department || student.Department === department) && (!result || student.Result === result);
+      });
+
+      filtered.sort((left, right) => {
+        const leftValue = left[state.sortKey];
+        const rightValue = right[state.sortKey];
+        const comparison = typeof leftValue === "number"
+          ? leftValue - rightValue
+          : String(leftValue).localeCompare(String(rightValue));
+        return comparison * state.sortDirection;
+      });
+
+      document.querySelector("#record-count").textContent = `${filtered.length} of ${state.students.length} students`;
+      const body = document.querySelector("#student-rows");
+      if (!filtered.length) {
+        body.innerHTML = `<tr><td class="empty-state" colspan="10">No students match these filters.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = filtered.map((student) => `<tr>
+        <td><span class="student-name">${escapeHtml(student.Name)}</span><span class="student-id">${escapeHtml(student["Student ID"])}</span></td>
+        <td class="department">${escapeHtml(student.Department)}</td>
+        ${subjectNames.map((subject) => `<td>${student[subject]}</td>`).join("")}
+        <td>${student["Attendance (%)"]}%</td>
+        <td><strong>${student["Average Marks"].toFixed(2)}</strong></td>
+        <td><span class="badge grade-${student.Grade.toLowerCase()}">${student.Grade}</span></td>
+        <td><span class="result-${student.Result.toLowerCase()}">${student.Result}</span></td>
+      </tr>`).join("");
+    }
+
+    async function startDashboard() {
+      try {
+        const response = await fetch("students.csv");
+        if (!response.ok) throw new Error(`Could not load students.csv (${response.status}).`);
+        state.students = processStudents(parseCsv(await response.text()));
+        renderSummary(state.students);
+        renderTable();
+      } catch (error) {
+        const notice = document.querySelector("#load-error");
+        notice.textContent = `${error.message} Open the dashboard from its GitHub Pages URL so the CSV can load.`;
+        notice.hidden = false;
+        document.querySelector("#dataset-meta").textContent = "Student records are unavailable.";
+      }
+    }
+
+    document.querySelector("#search").addEventListener("input", renderTable);
+    document.querySelector("#department-filter").addEventListener("change", renderTable);
+    document.querySelector("#result-filter").addEventListener("change", renderTable);
+    document.querySelectorAll(".sort-button").forEach((button) => button.addEventListener("click", () => {
+      const key = button.dataset.sort;
+      state.sortDirection = state.sortKey === key ? state.sortDirection * -1 : (key === "Average Marks" ? -1 : 1);
+      state.sortKey = key;
+      renderTable();
+    }));
+
+    startDashboard();
+  </script>
+</body>
+</html>
