@@ -1,6 +1,6 @@
 # Student Performance Analytics System
 
-**Live dashboard:** [View student data and analytics](https://a-rajyush.github.io/student-performance-analytics/)
+**View the live student dashboard:** [https://a-rajyush.github.io/student-performance-analytics/](https://a-rajyush.github.io/student-performance-analytics/?build=f018f1d)
 
 A small Python command-line project that reads student records from a CSV file and reports student marks, grades, pass/fail results, subject performance, and top performers. Pandas organizes the dataset and NumPy performs the numerical calculations.
 
